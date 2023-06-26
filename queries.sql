@@ -1,7 +1,20 @@
 SELECT COUNT(customers.customer_id) AS customers_count 
 FROM customers;
-
-
+--------------------------------------------------------------------------------
+-- Шаг 5, таблица 1 --- Начало
+SELECT 
+	DISTINCT (employees.first_name ||' '|| employees.last_name) AS name,
+	COUNT(sales.quantity) AS oprations,			-- количество сделок
+	ROUND(SUM(sales.quantity * products.price), 0) AS income  -- суммарная выручка каждого продавца за всё время
+FROM sales
+JOIN employees ON employees.employee_id = sales.sales_person_id
+JOIN products ON products.product_id = sales.product_id
+GROUP BY (employees.first_name ||' '|| employees.last_name)	-- группировка по "склееным" имени и фамилии
+ORDER BY income DESC
+LIMIT 10;  							-- выведены первые 10 продавцов т.к. по условию говорилось о десятке лучших продавцов
+	
+-- Шаг 5, таблица 1 --- Конец
+-------------------------------------------------------------------------
 -- Шаг 5, таблица 2 --- Начало
 SELECT 
 	(employees.first_name ||' '|| employees.last_name) AS name, 
@@ -16,7 +29,7 @@ HAVING 										-- задал отбор по сгруппированным з
 ORDER BY average_income ASC;
 
 -- Шаг 5, таблица 2 --- Конец
-
+---------------------------------------------------------------------
 -- Шаг 5, таблица 3 --- Начало
 SELECT 
 	(employees.first_name ||' '|| employees.last_name) AS name, 
