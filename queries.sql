@@ -44,3 +44,22 @@ GROUP BY weekday, date_part ('isodow', sales.sale_date), (employees.first_name |
 ORDER BY date_part ('isodow', sales.sale_date);
 
 -- Шаг 5, таблица 3 --- Конец
+------------------------------------------------------------------
+-- Шаг 6, таблица 1
+
+SELECT
+	CASE				       -- условия вывода возрастной группы
+		WHEN customers.age BETWEEN 16 AND 25 WHEN '16-25'	
+		WHEN customers.age BETWEEN 26 AND 40 WHEN '26-40'
+		WHEN customers.age > 40 THEN '40+'
+		END AS age_category,		-- условия вывода возрастной группы
+	COUNT(customers.age)			-- подсчёт количества пользователей, которые распределятся по возрастным группам
+FROM customers
+GROUP BY age_category
+ORDER BY age_category ASC;
+
+-- Шаг 6, таблица 1
+--------------------------------------------------------------------
+
+
+
