@@ -1,5 +1,7 @@
-SELECT COUNT(customers.customer_id) AS customers_count 
+-- Шаг 4
+SELECT COUNT(customers.customer_id) AS customers_count 		-- запрос, который считает общее количество покупателей
 FROM customers;
+-- Шаг 4
 --------------------------------------------------------------------------------
 -- Шаг 5, таблица 1 --- Начало
 SELECT 
