@@ -60,6 +60,33 @@ ORDER BY age_category ASC;
 
 -- Шаг 6, таблица 1
 --------------------------------------------------------------------
+-- Шаг 6, таблица 2
 
 
+-- Шаг 6, таблица 2
+--------------------------------------------------------------------
+-- Шаг 6, таблица 3
 
+WITH sub AS (									-- отдельный подзапрос, в котором просто выводится из таблицы всё необходимое
+	SELECT
+	DISTINCT ON (customers.customer_id) customers.customer_id,  		-- а именно вывод уникальных id, отображение которых не нужно в основном выводе
+	(customers.first_name ||' ' || customers.last_name) AS customer, 
+	sales.sale_date,
+	(employees.first_name ||' '|| employees.last_name) AS seller
+	FROM sales
+
+	JOIN customers ON customers.customer_id  = sales.customer_id 	
+	JOIN products ON products.product_id = sales.product_id 		
+	JOIN employees ON employees.employee_id = sales.sales_person_id
+	WHERE products.price  = 0
+)
+
+SELECT  					-- из выше сформированной таблицы выводится требуемая информация
+	customer, 
+	sale_date, 
+	seller 
+FROM sub 
+ORDER BY customer_id ASC;
+
+-- Шаг 6, таблица 3
+--------------------------------------------------------------------
