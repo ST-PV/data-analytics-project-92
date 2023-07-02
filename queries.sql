@@ -45,7 +45,7 @@ ORDER BY date_part ('isodow', sales.sale_date);
 
 -- Шаг 5, таблица 3 --- Конец
 ------------------------------------------------------------------
--- Шаг 6, таблица 1
+-- Шаг 6, таблица 1 -- Начало
 
 SELECT
 	CASE				       -- условия вывода возрастной группы
@@ -58,14 +58,23 @@ FROM customers
 GROUP BY age_category
 ORDER BY age_category ASC;
 
--- Шаг 6, таблица 1
+-- Шаг 6, таблица 1 -- Конец
 --------------------------------------------------------------------
--- Шаг 6, таблица 2
+-- Шаг 6, таблица 2	-- Начало
 
+SELECT  
+	TO_CHAR(sales.sale_date, 'YYYY-MM') as date,
+	COUNT(customers.first_name||' '|| customers.last_name),
+	SUM(sales.quantity * products.price)
+FROM sales
+JOIN customers ON customers.customer_id = sales.sales_person_id 
+JOIN products ON products.product_id = sales.product_id 
+GROUP BY date
+ORDER BY date ASC;
 
--- Шаг 6, таблица 2
+-- Шаг 6, таблица 2	-- Конец
 --------------------------------------------------------------------
--- Шаг 6, таблица 3
+-- Шаг 6, таблица 3	-- Начало
 
 WITH sub AS (									-- отдельный подзапрос, в котором просто выводится из таблицы всё необходимое
 	SELECT
@@ -88,5 +97,5 @@ SELECT  					-- из выше сформированной таблицы выв
 FROM sub 
 ORDER BY customer_id ASC;
 
--- Шаг 6, таблица 3
+-- Шаг 6, таблица 3	-Конец
 --------------------------------------------------------------------
