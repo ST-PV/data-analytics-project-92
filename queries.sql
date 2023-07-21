@@ -35,7 +35,7 @@ ORDER BY average_income ASC;
 -- Шаг 5, таблица 3 --- Начало
 SELECT 
 	(employees.first_name ||' '|| employees.last_name) AS name, 
-	to_char(sales.sale_date, 'Day') AS weekday, 			-- представление дня недели в словесном формате
+	to_char(sales.sale_date, 'day') AS weekday, 			-- представление дня недели в словесном формате
 	ROUND(SUM(sales.quantity * products.price), 0) AS income
 FROM sales
 JOIN employees ON employees.employee_id = sales.sales_person_id
