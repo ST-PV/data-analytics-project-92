@@ -6,7 +6,7 @@ FROM customers;
 -- Шаг 5, таблица 1 --- Начало
 SELECT 
 	DISTINCT (employees.first_name ||' '|| employees.last_name) AS name,
-	COUNT(sales.quantity) AS oprations,			-- количество сделок
+	COUNT(sales.quantity) AS operations,			-- количество сделок
 	ROUND(SUM(sales.quantity * products.price), 0) AS income  -- суммарная выручка каждого продавца за всё время
 FROM sales
 JOIN employees ON employees.employee_id = sales.sales_person_id
