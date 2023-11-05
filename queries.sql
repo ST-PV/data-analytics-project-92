@@ -1,101 +1,124 @@
--- Шаг 4
-SELECT COUNT(customers.customer_id) AS customers_count 		-- запрос, который считает общее количество покупателей
-FROM customers;
--- Шаг 4
---------------------------------------------------------------------------------
--- Шаг 5, таблица 1 --- Начало
-SELECT 
-	DISTINCT (employees.first_name ||' '|| employees.last_name) AS name,
-	COUNT(sales.quantity) AS operations,			-- количество сделок
-	ROUND(SUM(sales.quantity * products.price), 0) AS income  -- суммарная выручка каждого продавца за всё время
-FROM sales
-JOIN employees ON employees.employee_id = sales.sales_person_id
-JOIN products ON products.product_id = sales.product_id
-GROUP BY (employees.first_name ||' '|| employees.last_name)	-- группировка по "склееным" имени и фамилии
-ORDER BY income DESC
-LIMIT 10;  							-- выведены первые 10 продавцов т.к. по условию говорилось о десятке лучших продавцов
-	
--- Шаг 5, таблица 1 --- Конец
--------------------------------------------------------------------------
--- Шаг 5, таблица 2 --- Начало
-SELECT 
-	(employees.first_name ||' '|| employees.last_name) AS name, 
-	ROUND(AVG(sales.quantity * products.price), 0) AS average_income 
-FROM sales
-JOIN employees ON employees.employee_id = sales.sales_person_id
-JOIN products ON products.product_id = sales.product_id
-GROUP BY(employees.first_name ||' '|| employees.last_name)
-HAVING 										-- задал отбор по сгруппированным значениям
-	AVG(sales.quantity * products.price) < 					-- при помощи вложенной функции отобрал нужные значения
-	(SELECT AVG(sales.quantity * products.price) FROM sales JOIN products ON products.product_id = sales.product_id)
-ORDER BY average_income ASC;
+-- customers count START 
+-- шаг 4
+-- считает кол-во покупателей из таблицы customers
 
--- Шаг 5, таблица 2 --- Конец
----------------------------------------------------------------------
--- Шаг 5, таблица 3 --- Начало
+SELECT 
+	COUNT(first_name || last_name) AS customers_count
+FROM customers;
+
+-- customers count END
+---------------------------------------------------------------
+-- top_10_total_income START
+-- шаг 5.1
+-- выбирает продавцов, кол-во их сделок, сумму выручки
+-- TRUNC вместо ROUND чтобы отсечь значения после запятой без округления
+
+SELECT
+	first_name || ' ' || last_name AS name,
+	COUNT(quantity) AS operations,
+	TRUNC(SUM(quantity * price), 0) AS income
+FROM sales 
+JOIN employees ON sales.sales_person_id = employees.employee_id
+JOIN products ON sales.product_id = products.product_id 
+GROUP BY 1
+ORDER BY 3 DESC
+LIMIT 10;
+
+-- top_10_total_income END
+---------------------------------------------------------------
+-- lowest_average_income START
+-- шаг 5.2
+-- Информация о продавцах, чья средняя выручка за сделку меньше средней выручки за сделку по всем продавцам.
+
+SELECT
+	first_name || ' ' || last_name AS name,
+	ROUND(AVG(quantity * price), 0) AS average_income
+FROM sales 
+JOIN employees ON sales.sales_person_id = employees.employee_id
+JOIN products ON sales.product_id = products.product_id 
+GROUP BY 1
+HAVING ROUND(AVG(quantity * price), 0) < 
+	(
+	SELECT ROUND(AVG(quantity * price), 0) 
+	FROM sales JOIN products ON products.product_id = sales.product_id
+	)
+ORDER BY 2 ASC
+;
+
+-- lowest_average_income END
+---------------------------------------------------------------
+-- day_of_the_week_income START
+-- шаг 5.3
+-- информация о выручке по дням недели. Каждая запись содержит имя и фамилию продавца, день недели и суммарную выручку.
+
+
 SELECT 
 	(employees.first_name ||' '|| employees.last_name) AS name, 
-	to_char(sales.sale_date, 'day') AS weekday, 			-- представление дня недели в словесном формате
+	to_char(sales.sale_date, 'day') AS weekday, 			
 	ROUND(SUM(sales.quantity * products.price), 0) AS income
 FROM sales
 JOIN employees ON employees.employee_id = sales.sales_person_id
 JOIN products ON products.product_id = sales.product_id
-GROUP BY weekday, date_part ('isodow', sales.sale_date), (employees.first_name ||' '|| employees.last_name) -- из интересного тут только группировка по порядковому номеру дня недели
-ORDER BY date_part ('isodow', sales.sale_date);
+GROUP BY weekday, date_part ('isodow', sales.sale_date), 1
+ORDER BY date_part ('isodow', sales.sale_date)
+;
 
--- Шаг 5, таблица 3 --- Конец
-------------------------------------------------------------------
--- Шаг 6, таблица 1 -- Начало
+
+-- day_of_the_week_income END
+---------------------------------------------------------------
+-- age_groups START
+-- шаг 6.1
+-- отчет c количествоv покупателей в разных возрастных группах
 
 SELECT
-	CASE				       -- условия вывода возрастной группы
-		WHEN customers.age BETWEEN 16 AND 25 WHEN '16-25'	
-		WHEN customers.age BETWEEN 26 AND 40 WHEN '26-40'
-		WHEN customers.age > 40 THEN '40+'
-		END AS age_category,		-- условия вывода возрастной группы
-	COUNT(customers.age)			-- подсчёт количества пользователей, которые распределятся по возрастным группам
+	CASE
+		WHEN age BETWEEN 16 AND 25 THEN '16-25'
+		WHEN age BETWEEN 26 AND 40 THEN '26-40'
+		WHEN age > 40 THEN'40+'
+	END AS age_category,
+	COUNT(age) AS count
 FROM customers
 GROUP BY age_category
-ORDER BY age_category ASC;
+ORDER BY age_category
+;
 
--- Шаг 6, таблица 1 -- Конец
---------------------------------------------------------------------
--- Шаг 6, таблица 2	-- Начало
 
-SELECT  
-	TO_CHAR(sales.sale_date, 'YYYY-MM') as date,
-	COUNT(customers.first_name||' '|| customers.last_name),
-	SUM(sales.quantity * products.price)
+-- age_groups END
+---------------------------------------------------------------
+-- customers_by_month START
+-- шаг 6.2
+-- в отчете данные по дате, количеству уникальных покупателей и выручке, которую они принесли
+
+SELECT
+	TO_CHAR(sale_date, 'YYYY-MM') AS date,
+	COUNT(DISTINCT(customers.first_name||' '|| customers.last_name)) AS total_customers,
+	TRUNC(SUM(price * quantity), 0) AS income
 FROM sales
-JOIN customers ON customers.customer_id = sales.sales_person_id 
-JOIN products ON products.product_id = sales.product_id 
+JOIN customers ON customers.customer_id = sales.customer_id 
+JOIN products ON products.product_id = sales.product_id  
 GROUP BY date
-ORDER BY date ASC;
+ORDER BY date
+;
 
--- Шаг 6, таблица 2	-- Конец
---------------------------------------------------------------------
--- Шаг 6, таблица 3	-- Начало
+-- customers_by_month END
+---------------------------------------------------------------
+-- special_offer START
+-- шаг 6.3
+-- отчет о покупателях, первая покупка которых была в ходе проведения акций (акционные товары отпускали со стоимостью равной 0)
 
-WITH sub AS (									-- отдельный подзапрос, в котором просто выводится из таблицы всё необходимое
-	SELECT
-	DISTINCT ON (customers.customer_id) customers.customer_id,  		-- а именно вывод уникальных id, отображение которых не нужно в основном выводе
-	(customers.first_name ||' ' || customers.last_name) AS customer, 
-	sales.sale_date,
+SELECT
+	DISTINCT ON ((customers.first_name ||' ' || customers.last_name)) 
+	(customers.first_name ||' ' || customers.last_name) AS customer,
+	MIN(sales.sale_date) AS sale_date,
 	(employees.first_name ||' '|| employees.last_name) AS seller
-	FROM sales
+FROM sales
+JOIN customers ON customers.customer_id = sales.customer_id 	
+JOIN products ON products.product_id = sales.product_id 		
+JOIN employees ON employees.employee_id = sales.sales_person_id
+WHERE products.price = 0
+GROUP BY 1, 3
+;
 
-	JOIN customers ON customers.customer_id  = sales.customer_id 	
-	JOIN products ON products.product_id = sales.product_id 		
-	JOIN employees ON employees.employee_id = sales.sales_person_id
-	WHERE products.price  = 0
-)
 
-SELECT  					-- из выше сформированной таблицы выводится требуемая информация
-	customer, 
-	sale_date, 
-	seller 
-FROM sub 
-ORDER BY customer_id ASC;
-
--- Шаг 6, таблица 3	-Конец
---------------------------------------------------------------------
+-- special_offer END
+---------------------------------------------------------------
