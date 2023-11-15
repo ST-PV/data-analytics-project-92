@@ -33,14 +33,14 @@ LIMIT 10;
 SELECT
 	first_name || ' ' || last_name AS name,
 	ROUND(AVG(quantity * price), 0) AS average_income
-FROM sales 
-JOIN employees ON sales.sales_person_id = employees.employee_id
-JOIN products ON sales.product_id = products.product_id 
+FROM sales s
+JOIN employees e ON s.sales_person_id = e.employee_id
+JOIN products p ON s.product_id = p.product_id 
 GROUP BY 1
 HAVING ROUND(AVG(quantity * price), 0) < 
 	(
 	SELECT ROUND(AVG(quantity * price), 0) 
-	FROM sales JOIN products ON products.product_id = sales.product_id
+	FROM sales s JOIN products p ON p.product_id = s.product_id
 	)
 ORDER BY 2 ASC
 ;
@@ -53,14 +53,14 @@ ORDER BY 2 ASC
 
 
 SELECT 
-	(employees.first_name ||' '|| employees.last_name) AS name, 
-	to_char(sales.sale_date, 'day') AS weekday, 			
-	ROUND(SUM(sales.quantity * products.price), 0) AS income
-FROM sales
-JOIN employees ON employees.employee_id = sales.sales_person_id
-JOIN products ON products.product_id = sales.product_id
-GROUP BY weekday, date_part ('isodow', sales.sale_date), 1
-ORDER BY date_part ('isodow', sales.sale_date)
+	(e.first_name ||' '|| e.last_name) AS name, 
+	to_char(s.sale_date, 'day') AS weekday, 			
+	ROUND(SUM(s.quantity * p.price), 0) AS income
+FROM sales s
+JOIN employees e ON e.employee_id = s.sales_person_id
+JOIN products p ON p.product_id = s.product_id
+GROUP BY weekday, date_part ('isodow', s.sale_date), 1
+ORDER BY date_part ('isodow', s.sale_date)
 ;
 
 
@@ -77,7 +77,7 @@ SELECT
 		WHEN age > 40 THEN'40+'
 	END AS age_category,
 	COUNT(age) AS count
-FROM customers
+FROM customers c
 GROUP BY age_category
 ORDER BY age_category
 ;
@@ -90,12 +90,12 @@ ORDER BY age_category
 -- в отчете данные по дате, количеству уникальных покупателей и выручке, которую они принесли
 
 SELECT
-	TO_CHAR(sale_date, 'YYYY-MM') AS date,
-	COUNT(DISTINCT(customers.first_name||' '|| customers.last_name)) AS total_customers,
+	TO_CHAR(sale_date, 'YYYY-MM') AS date, 		-- такой алиас требовался в задании, иначе проверку не проходит
+	COUNT(DISTINCT(c.first_name||' '|| c.last_name)) AS total_customers,
 	TRUNC(SUM(price * quantity), 0) AS income
-FROM sales
-JOIN customers ON customers.customer_id = sales.customer_id 
-JOIN products ON products.product_id = sales.product_id  
+FROM sales s
+JOIN customers c ON c.customer_id = s.customer_id 
+JOIN products p ON p.product_id = s.product_id  
 GROUP BY date
 ORDER BY date
 ;
@@ -107,14 +107,14 @@ ORDER BY date
 -- отчет о покупателях, первая покупка которых была в ходе проведения акций (акционные товары отпускали со стоимостью равной 0)
 
 SELECT
-	DISTINCT ON ((customers.first_name ||' ' || customers.last_name)) 
-	(customers.first_name ||' ' || customers.last_name) AS customer,
-	MIN(sales.sale_date) AS sale_date,
-	(employees.first_name ||' '|| employees.last_name) AS seller
-FROM sales
-JOIN customers ON customers.customer_id = sales.customer_id 	
-JOIN products ON products.product_id = sales.product_id 		
-JOIN employees ON employees.employee_id = sales.sales_person_id
+	DISTINCT ON ((c.first_name ||' ' || c.last_name)) 
+	(c.first_name ||' ' || c.last_name) AS customer,
+	MIN(s.sale_date) AS sale_date,
+	(e.first_name ||' '|| e.last_name) AS seller
+FROM sales s
+JOIN customers c ON c.customer_id = s.customer_id 	
+JOIN products p ON p.product_id = s.product_id 		
+JOIN employees e ON e.employee_id = s.sales_person_id
 WHERE products.price = 0
 GROUP BY 1, 3
 ;
